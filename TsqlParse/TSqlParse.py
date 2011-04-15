@@ -15,14 +15,16 @@ usage:
 
    TSqlParse.py -f"C:\BS_Apps\Scripts\TSqlParseSample.sql" -vstartdate='20090401' -venddate='20110430'
 
-supports: -
+sample: -
 
 declare @startdate datetime = /* var:startdate */ '2010-04-01 00:00' /* end */
 declare @enddate datetime = /* var:enddate */ '2010-10-26 00:00' /* end */
-declare @classes varchar(max) = CAST(/* var:sizeclassid */ 5 /*end */ as varchar(max)) -- '5,6,7'
-declare @fleet varchar(max) = /* var:fleetfilter */ null /* end */ -- 'Clean LR1'
 
-/* log: "%s: %s -> %s", getdate(), @startdate, @enddate */
+declare @foo varchar(max) = CAST(/* var:foo */ 5 /*end */ as varchar(max)) 
+declare @bar varchar(max) = /* var:bar */ null /* end */ 
+
+
+/* log: "%s{16,120}: %s{10,120} -> %s{10,120}, foo is %s and bar is %s", getdate(), @startdate, @enddate, @foo, @bar */
 
 """
 class TSqlParse():
@@ -66,7 +68,7 @@ class TSqlParse():
                         styles.append("")
                 
                 if len(place_holders) == len(sub_list):                   
-                    new_format_text = sub(regex, lambda x: "' + convert(varchar(%s), %s %s) + '" 
+                    new_format_text = sub(regex, lambda x: "' + convert(varchar(%s), isnull(%s,'NULL') %s) + '" 
                         % (lengths.pop(0), sub_list.pop(0), styles.pop(0)), format_text)
 
             return "set @__logmsg='%s'; raiserror(@__logmsg, 10, 1) with nowait" % new_format_text
