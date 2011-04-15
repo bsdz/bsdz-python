@@ -8,4 +8,8 @@ declare @bar varchar(max) = /* var:bar */ null /* end */
 /* log: "%s{16,120}: %s{10,120} -> %s{10,120}, foo is %s and bar is %s", getdate(), @startdate, @enddate, @foo, @bar */
 
 
+declare @exitcode int = 10
+
+/* sqlcmd: exit(select @exitcode) */
+
 

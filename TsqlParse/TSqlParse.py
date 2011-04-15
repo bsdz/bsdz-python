@@ -38,18 +38,18 @@ class TSqlParse():
         
         # replace all the commented vars, i.e. /* var:foo */ ... /* end */
         #
-        def collect(matchobj, var_dict = self.var_dict):
+        def collect_vars(matchobj, var_dict = self.var_dict):
             if matchobj.group(1) in var_dict:
                 return var_dict[matchobj.group(1)]
             else:
                 return matchobj.group(2)
 
         regex = '/\*\s*var:(\w+)\s*\*/(.*)/\*\s*end\s*\*/'
-        new_txt = sub(regex, lambda x: sub(regex, collect , x.group(0)) , orig_txt)
+        new_txt = sub(regex, lambda x: sub(regex, collect_vars, x.group(0)) , orig_txt)
 
         # replace all commented logs, i.e. /* log: "....", getdate(), @foo, @bar, ... */        
         #
-        def collect2(matchobj):
+        def collect_logs(matchobj):
             if len(matchobj.groups()) == 2:
                 format_text = matchobj.group(1)
                 sub_list = [i.strip() for i in matchobj.group(2).split(",")]
@@ -74,9 +74,14 @@ class TSqlParse():
             return "set @__logmsg='%s'; raiserror(@__logmsg, 10, 1) with nowait" % new_format_text
         
         regex = '/\*\s*log:\s*"(.*)",\s*(.*)\*/'
-        new_txt2 = sub(regex, lambda x: sub(regex, collect2 , x.group(0)), new_txt)
-        
-        return "declare @__logmsg varchar(2047)\r\n\r\n%s" % new_txt2        
+        new_txt2 = "declare @__logmsg varchar(2047)\r\n\r\n" + sub(regex, lambda x: sub(regex, collect_logs , x.group(0)), new_txt)
+       
+        # replace all commented sqlcmd, i.e. /* sqlcmd: ... */
+        #
+        regex = '/\*\s*sqlcmd:\s*(.*)\s*\*/'
+        new_txt3 = sub(regex, lambda x: ':' + x.group(1) , new_txt2)   
+
+        return new_txt3
 
 def main():
     log = getLogger("TSqlParse")
@@ -161,7 +166,7 @@ def main():
             p = Popen(command, shell=True, stdout=PIPE, stderr=PIPE)
             output, errors = p.communicate()                    
             log.info(output.replace("\r\n", "\n"))            
-            log.info("Job terminated with code '%s'" % p.returncode)         
+            log.info("Script terminated with code '%s'" % p.returncode)         
             
             unlink(filename)
             exit(p.returncode)
